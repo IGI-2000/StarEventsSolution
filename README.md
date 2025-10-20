@@ -1,6 +1,6 @@
 # StarEventsSolution
 
 Done By
-Sanupa Bimsath Marapana
-Chathuri Kaveesha
-Christina Randeniya
+1. Sanupa Bimsath Marapana
+2. Chathuri Kaveesha
+3. Christina Randeniya
