@@ -1,0 +1,66 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.EventViewModel>
+
+@{
+    ViewBag.Title = "Home - StarEvents";
+}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Upcoming Events (@ViewBag.UpcomingCount)</h2>
+
+        <div>
+            @if (User?.Identity?.IsAuthenticated == true)
+            {
+                @* inner conditionals are inside an existing code block — remove '@' before them *@
+                if (User.IsInRole("Organizer"))
+                {
+                    <a class="btn btn-success me-2" href='@Url.Action("CreateEvent", "Organizer")'>Create Event</a>
+                    <a class="btn btn-outline-primary me-2" href='@Url.Action("MyEvents", "Organizer")'>My Events</a>
+                }
+                else if (User.IsInRole("Customer"))
+                {
+                    <a class="btn btn-primary me-2" href='@Url.Action("MyBookings", "Booking")'>My Bookings</a>
+                    <a class="btn btn-outline-primary" href='@Url.Action("Index", "Event")'>Browse Events</a>
+                }
+                else if (User.IsInRole("Admin"))
+                {
+                    <a class="btn btn-warning me-2" href='@Url.Action("Dashboard", "Admin")'>Admin Dashboard</a>
+                    <a class="btn btn-outline-secondary" href='@Url.Action("SalesReport", "Report")'>Reports</a>
+                }
+            }
+            else
+            {
+                <a class="btn btn-primary me-2" href='@Url.Action("Index", "Event")'>Browse Events</a>
+                <a class="btn btn-outline-secondary" href='@Url.Action("Login", "Account")'>Login</a>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var evt in Model)
+        {
+            var venueName = string.IsNullOrWhiteSpace(evt.VenueName) ? "TBA" : evt.VenueName;
+            var displayDate = evt.EventDate.HasValue ? evt.EventDate.Value.ToString("dd MMM yyyy") : "TBA";
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(evt.ImageUrl))
+                    {
+                        <img src="@evt.ImageUrl" class="card-img-top" style="height:200px;object-fit:cover" alt="@evt.EventName" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@evt.EventName</h5>
+                        <p class="card-text"><small class="text-muted">@displayDate — @venueName</small></p>
+                        <p class="card-text">@((!string.IsNullOrEmpty(evt.Description) && evt.Description.Length > 120) ? evt.Description.Substring(0, 120) + "..." : evt.Description)</p>
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-sm btn-outline-primary" href='@Url.Action("Details", "Event", new { id = evt.EventId })'>Details</a>
+                            @if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Customer"))
+                            {
+                                <a class="btn btn-sm btn-primary" href='@Url.Action("BookTicket", "Booking", new { eventId = evt.EventId })'>Book</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

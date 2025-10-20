@@ -1,0 +1,54 @@
+﻿@model StarEvents.Models.Domain.Booking
+
+@{
+    ViewBag.Title = "Booking Confirmation";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4 text-success">Booking Confirmed</h2>
+
+    <div class="card p-4 mb-4 shadow-sm">
+        <h5 class="card-title mb-3">Booking Summary</h5>
+
+        <p><strong>Reference:</strong> @Model.BookingReference</p>
+        <p><strong>Event:</strong> @Model.Event?.EventName ?? "N/A"</p>
+        <p><strong>Date:</strong> @(Model.Event?.EventDate.ToString("dd MMM yyyy") ?? "N/A")</p>
+        <p><strong>Total Paid:</strong> @Model.FinalAmount.ToString("C")</p>
+        <p><strong>Status:</strong> @Model.Status.ToString()</p>
+    </div>
+
+    <div class="card p-4 mb-4 shadow-sm">
+        <h5 class="card-title mb-3">Your Tickets</h5>
+        <ul class="list-group">
+            @if (Model.Tickets != null && Model.Tickets.Any())
+            {
+                foreach (var t in Model.Tickets.OrderBy(x => x.TicketNumber))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            <strong>🎟 @t.TicketNumber</strong>
+                            <small class="text-muted ms-2">(@(t.SeatNumber ?? ""))</small>
+                        </span>
+                        <a class="btn btn-sm btn-outline-primary"
+                           href='@Url.Action("DownloadTicket", "Booking", new { ticketId = t.TicketId })'>
+                            Download PDF
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <li class="list-group-item text-muted">No tickets found.</li>
+            }
+        </ul>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="@Url.Action("MyBookings", "Booking")" class="btn btn-primary">
+            Back to My Bookings
+        </a>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+            Return to Home
+        </a>
+    </div>
+</div>

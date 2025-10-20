@@ -1,0 +1,35 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.DiscountViewModel>
+
+@{
+    ViewBag.Title = "Discounts";
+}
+
+<div class="container my-4">
+    <h2>Discounts</h2>
+
+    <p><a class="btn btn-primary" href="@Url.Action("EditDiscount","Admin", new { id = 0 })">Create Discount</a></p>
+
+    <table class="table">
+        <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Active</th><th>Actions</th></tr></thead>
+        <tbody>
+            @foreach (var d in Model)
+            {
+                <tr>
+                    <td>@d.Code</td>
+                    <td>@(d.Percentage.HasValue ? "Percent" : "Fixed")</td>
+                    <td>@(d.Percentage.HasValue ? d.Percentage + "%" : d.Amount?.ToString("C"))</td>
+                    <td>@(d.IsActive ? "Yes" : "No")</td>
+                    <td>
+                        <a class="btn btn-sm btn-link" href="@Url.Action("EditDiscount","Admin", new { id = d.DiscountId })">Edit</a>
+                        @using (Html.BeginForm("DeleteDiscount", "Admin", FormMethod.Post, new { @class = "d-inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("id", d.DiscountId)
+                            <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Delete discount?');">Delete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

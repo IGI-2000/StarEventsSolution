@@ -1,0 +1,292 @@
+﻿@using System.Web.Security
+@using System.Linq
+@using System.Security.Claims
+@{
+    Layout = null;
+
+    bool isAuthenticated = User?.Identity?.IsAuthenticated == true;
+    bool isAdmin = false, isOrganizer = false, isCustomer = false;
+
+    if (isAuthenticated)
+    {
+        var cp = User as ClaimsPrincipal;
+        if (cp != null)
+        {
+            isAdmin = cp.IsInRole("Admin") || cp.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Admin");
+            isOrganizer = cp.IsInRole("Organizer") || cp.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Organizer");
+            isCustomer = cp.IsInRole("Customer") || cp.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Customer");
+        }
+        else
+        {
+            isAdmin = User.IsInRole("Admin");
+            isOrganizer = User.IsInRole("Organizer");
+            isCustomer = User.IsInRole("Customer");
+        }
+
+        if (!isAdmin && !isOrganizer && !isCustomer)
+        {
+            try
+            {
+                var resolver = System.Web.Mvc.DependencyResolver.Current;
+                var db = resolver.GetService(typeof(StarEvents.Data.ApplicationDbContext)) as StarEvents.Data.ApplicationDbContext;
+                var email = User.Identity?.Name;
+                if (db != null && !string.IsNullOrEmpty(email))
+                {
+                    var user = db.Set<StarEvents.Models.Domain.BaseUser>().FirstOrDefault(u => u.Email == email);
+                    if (user != null)
+                    {
+                        isAdmin = user.Role == StarEvents.Models.Domain.UserRole.Admin;
+                        isOrganizer = user.Role == StarEvents.Models.Domain.UserRole.Organizer;
+                        isCustomer = user.Role == StarEvents.Models.Domain.UserRole.Customer;
+                    }
+                }
+            }
+            catch { }
+        }
+    }
+
+    var brandPrimary = "#5A47FF";
+    var brandDark = "#2C1EFF";
+    var siteTitle = "StarEvents";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>@ViewBag.Title - @siteTitle</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+        :root {
+            --brand: @brandPrimary;
+            --brand-dark: @brandDark;
+        }
+
+        html, body {
+            font-family: 'Poppins', sans-serif;
+            background: #f4f6fa;
+            color: #212529;
+            scroll-behavior: smooth;
+        }
+
+        /* Modern Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--brand-dark) !important;
+            letter-spacing: 0.5px;
+        }
+
+        .navbar-nav .nav-link {
+            font-weight: 500;
+            color: #333;
+            margin: 0 6px;
+            transition: color 0.2s ease;
+        }
+        .navbar-nav .nav-link:hover {
+            color: var(--brand);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(90deg, var(--brand), var(--brand-dark));
+            border: none;
+            box-shadow: 0 6px 14px rgba(90,71,255,0.3);
+            transition: 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(90,71,255,0.4);
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Footer */
+        footer {
+            background: #fff;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+
+        footer a {
+            color: #555;
+            text-decoration: none;
+            margin-right: 12px;
+        }
+
+        footer a:hover {
+            color: var(--brand);
+        }
+
+        /* Alerts */
+        .site-alert {
+            position: fixed;
+            top: 90px;
+            right: 25px;
+            z-index: 1080;
+        }
+
+        .toast {
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Search */
+        .search-input input {
+            border-radius: 20px 0 0 20px;
+        }
+        .search-input .btn {
+            border-radius: 0 20px 20px 0;
+        }
+
+        /* Responsive tweaks */
+        @@media (max-width: 767px) {
+            .navbar-brand span { display: none; }
+        }
+    </style>
+
+    @RenderSection("Head", required: false)
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href='@Url.Action("Index", "Home")'>
+                <i class="fa-solid fa-ticket fa-lg me-2"></i> <span>@siteTitle</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#mainOffcanvas">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse d-none d-lg-flex" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href='@Url.Action("Index","Home")'>Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href='@Url.Action("Index","Event")'>Events</a></li>
+                    <li class="nav-item"><a class="nav-link" href='@Url.Action("Search","Event")'>Search</a></li>
+                </ul>
+
+                <form class="d-flex align-items-center me-3" method="get" action='@Url.Action("Search","Event")'>
+                    <div class="input-group search-input">
+                        <input name="q" class="form-control form-control-sm" placeholder="Search events..." />
+                        <button class="btn btn-sm btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                    </div>
+                </form>
+
+                <ul class="navbar-nav align-items-center">
+                    @if (isAuthenticated)
+                    {
+                        <li class="nav-item dropdown ms-3">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                                <img src="https://ui-avatars.com/api/?name=@(HttpUtility.UrlEncode(User.Identity.Name))&background=5A47FF&color=fff&rounded=true"
+                                     class="me-2" width="32" height="32" style="border-radius:50%;" />
+                                <span>@User.Identity.Name</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @if (isAdmin)
+                                {
+                                    <li><a class="dropdown-item" href='@Url.Action("Dashboard","Admin")'>Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item" href='@Url.Action("ManageEvents","Admin")'>Manage Events</a></li>
+                                    <li><a class="dropdown-item" href='@Url.Action("SalesReport","Report")'>Sales Reports</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                }
+                                @if (isOrganizer)
+                                {
+                                    <li><a class="dropdown-item" href='@Url.Action("CreateEvent","Organizer")'>Create Event</a></li>
+                                    <li><a class="dropdown-item" href='@Url.Action("MyEvents","Organizer")'>Organizer Dashboard</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                }
+                                @if (isCustomer)
+                                {
+                                    <li><a class="dropdown-item" href='@Url.Action("MyBookings","Booking")'>My Bookings</a></li>
+                                }
+                                <li><a class="dropdown-item" href='@Url.Action("Profile","Account")'>Profile</a></li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    @using (Html.BeginForm("Logout", "Account", FormMethod.Post))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger">Logout</button>
+                                    }
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="btn btn-outline-primary me-2" href='@Url.Action("Login","Account")'>Login</a></li>
+                        <li class="nav-item"><a class="btn btn-primary" href='@Url.Action("Register","Account")'>Sign Up</a></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div style="padding-top:90px;"></div>
+
+    <div class="site-alert">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="toast show bg-success text-white" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close btn-close-white m-auto me-2" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="toast show bg-danger text-white" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">@TempData["ErrorMessage"]</div>
+                    <button type="button" class="btn-close btn-close-white m-auto me-2" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <main role="main" class="py-4">
+        <div class="container">
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="py-4 text-center">
+        <div class="container">
+            <div class="small text-muted">© @DateTime.UtcNow.Year @siteTitle. All Rights Reserved.</div>
+            <div class="mt-2">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms</a>
+                <a href="#">Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(function () {
+            setTimeout(() => $('.toast').fadeOut(400), 4000);
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,74 @@
+﻿@model StarEvents.Models.ViewModels.EventSearchViewModel
+
+@{
+    ViewBag.Title = "Search Events";
+}
+
+<div class="container my-4">
+    <h2>Search Events</h2>
+
+    <form method="get" action="@Url.Action("Search", "Event")" class="card p-3 mb-3">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <input name="keyword" value="@Model.SearchKeyword" class="form-control" placeholder="Keyword" />
+            </div>
+            <div class="col-md-2">
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    @foreach (var c in Model.AvailableCategories ?? new List<string>())
+                    {
+                        <option value="@c" @(c == Model.Category ? "selected" : "")>@c</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input name="date" value="@(Model.EventDate?.ToString("yyyy-MM-dd") ?? string.Empty)" type="date" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <select name="location" class="form-select">
+                    <option value="">All Locations</option>
+                    @foreach (var v in Model.AvailableLocations ?? new List<string>())
+                    {
+                        <option value="@v" @(v == Model.Location ? "selected" : "")>@v</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Results == null)
+    {
+        <div class="alert alert-info">Use the filters above to search events.</div>
+    }
+    else if (!Model.Results.Any())
+    {
+        <div class="alert alert-warning">No events found.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var evt in Model.Results)
+            {
+                var displayDate = evt.EventDate.HasValue ? evt.EventDate.Value.ToString("dd MMM yyyy") : "TBA";
+                var venue = string.IsNullOrWhiteSpace(evt.VenueName) ? "TBA" : evt.VenueName;
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        @if (!string.IsNullOrEmpty(evt.ImageUrl))
+                        {
+                            <img src="@evt.ImageUrl" class="card-img-top" style="height:160px;object-fit:cover" alt="@evt.EventName" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@evt.EventName</h5>
+                            <p class="card-text"><small class="text-muted">@displayDate — @venue</small></p>
+                            <p class="card-text">@((!string.IsNullOrEmpty(evt.Description) && evt.Description.Length > 120) ? evt.Description.Substring(0, 120) + "..." : evt.Description)</p>
+                            <a class="btn btn-sm btn-outline-primary" href='@Url.Action("Details","Event", new { id = evt.EventId })'>Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

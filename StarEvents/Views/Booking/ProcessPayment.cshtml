@@ -1,0 +1,70 @@
+﻿@model StarEvents.Models.ViewModels.PaymentViewModel
+
+@{
+    ViewBag.Title = "Process Payment";
+}
+
+<div class="container my-4">
+    <h2>Process Payment</h2>
+
+    <div class="card p-3 mb-3 shadow-sm">
+        <p><strong>Booking:</strong> @(Model.BookingReference ?? ("#" + Model.BookingId))</p>
+        <p><strong>Amount to Pay:</strong> @Model.Amount.ToString("C")</p>
+    </div>
+
+    @using (Html.BeginForm("ProcessPayment", "Booking", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.BookingId)
+        @Html.HiddenFor(m => m.Amount)
+        @Html.HiddenFor(m => m.BookingReference)
+
+        <div class="mb-3">
+            @Html.LabelFor(m => m.CustomerEmail, "Customer Email")
+            @Html.TextBoxFor(m => m.CustomerEmail, new { @class = "form-control", type = "email", placeholder = "Enter your email" })
+            @Html.ValidationMessageFor(m => m.CustomerEmail, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="mb-3">
+            @Html.LabelFor(m => m.NameOnCard, "Name on Card")
+            @Html.TextBoxFor(m => m.NameOnCard, new { @class = "form-control", placeholder = "Name as shown on card" })
+            @Html.ValidationMessageFor(m => m.NameOnCard, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="mb-3">
+            @Html.LabelFor(m => m.CardNumber, "Card Number")
+            @Html.TextBoxFor(m => m.CardNumber, new { @class = "form-control", autocomplete = "cc-number", placeholder = "1234 5678 9012 3456" })
+            @Html.ValidationMessageFor(m => m.CardNumber, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="row g-2">
+            <div class="col-md-4">
+                @Html.LabelFor(m => m.ExpiryMonth, "Expiry Month")
+                @Html.TextBoxFor(m => m.ExpiryMonth, new { @class = "form-control", type = "number", min = "1", max = "12", placeholder = "MM" })
+                @Html.ValidationMessageFor(m => m.ExpiryMonth, "", new { @class = "text-danger" })
+            </div>
+            <div class="col-md-4">
+                @Html.LabelFor(m => m.ExpiryYear, "Expiry Year")
+                @Html.TextBoxFor(m => m.ExpiryYear, new { @class = "form-control", type = "number", placeholder = "YYYY" })
+                @Html.ValidationMessageFor(m => m.ExpiryYear, "", new { @class = "text-danger" })
+            </div>
+            <div class="col-md-4">
+                @Html.LabelFor(m => m.CVV, "CVV")
+                @Html.TextBoxFor(m => m.CVV, new { @class = "form-control", autocomplete = "cc-csc", placeholder = "***", maxlength = "4" })
+                @Html.ValidationMessageFor(m => m.CVV, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-check mt-3">
+            @Html.CheckBoxFor(m => m.SaveCard, new { @class = "form-check-input", id = "saveCardCheck" })
+            @Html.LabelFor(m => m.SaveCard, "Save this card for future payments", new { @class = "form-check-label", @for = "saveCardCheck" })
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">
+                Pay @Model.Amount.ToString("C")
+            </button>
+            @Html.ActionLink("Cancel", "BookingDetails", "Booking", new { id = Model.BookingId }, new { @class = "btn btn-outline-secondary ms-2" })
+        </div>
+    }
+</div>

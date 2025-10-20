@@ -1,0 +1,52 @@
+﻿@model StarEvents.Models.ViewModels.EventViewModel
+
+@{
+    ViewBag.Title = "Event Details";
+    var venueName = string.IsNullOrWhiteSpace(Model.VenueName) ? "N/A" : Model.VenueName;
+    var organizerName = string.IsNullOrWhiteSpace(Model.OrganizerName) ? "N/A" : Model.OrganizerName;
+    var displayDate = Model.EventDate.HasValue ? Model.EventDate.Value.ToString("dd MMM yyyy HH:mm") : "TBA";
+}
+
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>@Model.EventName</h2>
+            <p class="text-muted">@displayDate — @venueName</p>
+
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" class="img-fluid mb-3" style="max-height:400px;object-fit:cover" />
+            }
+
+            <p>@Model.Description</p>
+            <p><strong>Available Seats:</strong> @Model.AvailableSeats</p>
+
+            <div class="mt-3">
+                @if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Customer") && Model.IsPublished && Model.IsActive)
+                {
+                    <a href="@Url.Action("BookTicket", "Booking", new { eventId = Model.EventId })" class="btn btn-primary">Book Tickets</a>
+                }
+                else if (!Model.IsPublished || !Model.IsActive)
+                {
+                    <span class="text-muted">This event is not available for booking.</span>
+                }
+                else
+                {
+                    var returnUrl = Url.Action("BookTicket", "Booking", new { eventId = Model.EventId });
+                    <a href="@Url.Action("Login", "Account", new { returnUrl = returnUrl })" class="btn btn-secondary">Login to Book</a>
+                }
+                @Html.ActionLink("Back to Events", "Index", "Event", null, new { @class = "btn btn-link ms-2" })
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h5>Event Info</h5>
+                <p><strong>Category:</strong> @Model.Category</p>
+                <p><strong>Venue:</strong> @venueName</p>
+                <p><strong>Organizer:</strong> @organizerName</p>
+                <p><strong>Status:</strong> @(Model.IsPublished ? "Published" : "Draft")</p>
+            </div>
+        </div>
+    </div>
+</div>

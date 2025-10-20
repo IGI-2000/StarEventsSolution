@@ -1,0 +1,95 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.BookingListItemViewModel>
+
+@{
+    ViewBag.Title = "My Bookings";
+}
+
+<div class="container my-4">
+    <h2 class="mb-4">My Bookings</h2>
+
+    @if (!Model?.Any() ?? true)
+    {
+        <div class="alert alert-info text-center">You have no bookings yet.</div>
+    }
+    else
+    {
+        <div class="accordion" id="bookingsAccordion">
+            @foreach (var booking in Model)
+            {
+                var collapseId = "collapse" + booking.BookingId;
+                <div class="card mb-2 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>@booking.BookingReference</strong> — @booking.EventName
+                            <small class="text-muted">
+                                (@booking.BookingDate.ToLocalTime().ToString("dd MMM yyyy HH:mm"))
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge @(booking.Status == StarEvents.Models.Domain.BookingStatus.Confirmed ? "bg-success" :
+                                booking.Status == StarEvents.Models.Domain.BookingStatus.Pending ? "bg-warning" : "bg-secondary")">
+                                @booking.Status
+                            </span>
+                            <a class="btn btn-sm btn-link ms-2" data-bs-toggle="collapse" href="#@collapseId">Details</a>
+                        </div>
+                    </div>
+
+                    <div id="@collapseId" class="collapse" data-bs-parent="#bookingsAccordion">
+                        <div class="card-body">
+                            <p><strong>Total:</strong> @booking.FinalAmount.ToString("C")</p>
+                            <p><strong>Tickets:</strong> @booking.TicketCount</p>
+
+                            @if (booking.Tickets != null && booking.Tickets.Any())
+                            {
+                                <h6 class="mt-3">Tickets</h6>
+                                <ul class="list-unstyled">
+                                    @foreach (var t in booking.Tickets)
+                                    {
+                                        <li class="mb-2 d-flex align-items-center justify-content-between border-bottom pb-1">
+                                            <span>
+                                                🎟 <strong>@t.TicketNumber</strong>
+                                                <small class="text-muted ms-1">@t.SeatNumber</small>
+                                            </span>
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               href="@Url.Action("DownloadTicket", "Booking", new { ticketId = t.TicketId })">
+                                                Download PDF
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+
+                            <div class="mt-3 d-flex flex-wrap gap-2">
+                                <a class="btn btn-sm btn-secondary"
+                                   href='@Url.Action("BookingDetails", "Booking", new { id = booking.BookingId })'>
+                                    View Details
+                                </a>
+
+                                @if (booking.Status == StarEvents.Models.Domain.BookingStatus.Pending)
+                                {
+                                    <a class="btn btn-sm btn-primary"
+                                       href='@Url.Action("RetryPayment", "Booking", new { bookingId = booking.BookingId })'>
+                                        Pay Now
+                                    </a>
+                                }
+
+                                @if (booking.Status != StarEvents.Models.Domain.BookingStatus.Cancelled)
+                                {
+                                    using (Html.BeginForm("CancelBooking", "Booking", FormMethod.Post, new { @class = "d-inline" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        @Html.Hidden("id", booking.BookingId)
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                                onclick="return confirm('Cancel this booking?');">
+                                            Cancel
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

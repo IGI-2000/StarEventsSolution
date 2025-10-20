@@ -1,0 +1,225 @@
+﻿@model StarEvents.Models.ViewModels.EventCreateViewModel
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Create Event";
+}
+
+<h2>Create Event</h2>
+
+@using (Html.BeginForm("CreateEvent", "Organizer", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.EventId)
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.EventName)
+        @Html.TextBoxFor(m => m.EventName, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.EventName)
+    </div>
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.Description)
+        @Html.TextAreaFor(m => m.Description, 6, 80, new { @class = "form-control" })
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            @Html.LabelFor(m => m.EventDate)
+            @Html.TextBoxFor(m => m.EventDate, "{0:yyyy-MM-ddTHH:mm}", new { @class = "form-control", type = "datetime-local" })
+        </div>
+        <div class="col-md-4">
+            @Html.Label("Venue")
+            @Html.DropDownListFor(m => m.VenueId, new SelectList(Model.AvailableVenues, "Value", "Text", Model.VenueId), "-- Select venue --", new { @class = "form-control" })
+        </div>
+        <div class="col-md-4">
+            @Html.LabelFor(m => m.ImageUrl)
+            @Html.TextBoxFor(m => m.ImageUrl, new { @class = "form-control", placeholder = "https://...", id = "imageUrlInput" })
+        </div>
+    </div>
+
+    <div class="mb-3" id="imagePreviewWrapper" style="display:@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "none" : "block")">
+        <label>Image preview</label>
+        <div>
+            <img id="imagePreview" src="@Model.ImageUrl" alt="Event image" style="max-height:200px;max-width:100%;" />
+        </div>
+    </div>
+
+    <h5>Ticket Types</h5>
+    <table class="table table-sm" id="ticketTypesTable">
+        <thead><tr><th>Type</th><th>Price</th><th>Qty</th><th>Description</th><th></th></tr></thead>
+        <tbody>
+            @{
+                if (Model.TicketTypes != null && Model.TicketTypes.Any())
+                {
+                    for (int i = 0; i < Model.TicketTypes.Count; i++)
+                    {
+                        <tr>
+                            <td>@Html.TextBoxFor(m => m.TicketTypes[i].TypeName, new { @class = "form-control" })</td>
+                            <td>@Html.TextBoxFor(m => m.TicketTypes[i].Price, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                            <td>@Html.TextBoxFor(m => m.TicketTypes[i].AvailableQuantity, new { @class = "form-control", type = "number", min = "0" })</td>
+                            <td>@Html.TextBoxFor(m => m.TicketTypes[i].Description, new { @class = "form-control" })</td>
+                            <td><button type="button" class="btn btn-sm btn-danger remove-ticket">Remove</button></td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td><input name="TicketTypes[0].TypeName" class="form-control" /></td>
+                        <td><input name="TicketTypes[0].Price" class="form-control" type="number" step="0.01" /></td>
+                        <td><input name="TicketTypes[0].AvailableQuantity" class="form-control" type="number" min="0" /></td>
+                        <td><input name="TicketTypes[0].Description" class="form-control" /></td>
+                        <td><button type="button" class="btn btn-sm btn-danger remove-ticket">Remove</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <button type="button" id="addTicketType" class="btn btn-sm btn-primary mb-3">Add Ticket Type</button>
+
+    <h5>Discounts</h5>
+    <table class="table table-sm" id="discountsTable">
+        <thead><tr><th>Code</th><th>Percentage</th><th>Max Amount</th><th>From</th><th>To</th><th></th></tr></thead>
+        <tbody>
+            @{
+                if (Model.Discounts != null && Model.Discounts.Any())
+                {
+                    for (int i = 0; i < Model.Discounts.Count; i++)
+                    {
+                        <tr>
+                            <td>@Html.TextBoxFor(m => m.Discounts[i].DiscountCode, new { @class = "form-control" })</td>
+                            <td>@Html.TextBoxFor(m => m.Discounts[i].DiscountPercentage, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                            <td>@Html.TextBoxFor(m => m.Discounts[i].MaxDiscountAmount, new { @class = "form-control", type = "number", step = "0.01" })</td>
+                            <td>@Html.TextBoxFor(m => m.Discounts[i].ValidFrom, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })</td>
+                            <td>@Html.TextBoxFor(m => m.Discounts[i].ValidTo, "{0:yyyy-MM-dd}", new { @class = "form-control", type = "date" })</td>
+                            <td><button type="button" class="btn btn-sm btn-danger remove-discount">Remove</button></td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td><input name="Discounts[0].DiscountCode" class="form-control" /></td>
+                        <td><input name="Discounts[0].DiscountPercentage" class="form-control" type="number" step="0.01" /></td>
+                        <td><input name="Discounts[0].MaxDiscountAmount" class="form-control" type="number" step="0.01" /></td>
+                        <td><input name="Discounts[0].ValidFrom" class="form-control" type="date" /></td>
+                        <td><input name="Discounts[0].ValidTo" class="form-control" type="date" /></td>
+                        <td><button type="button" class="btn btn-sm btn-danger remove-discount">Remove</button></td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+    <button type="button" id="addDiscount" class="btn btn-sm btn-primary mb-3">Add Discount</button>
+
+    <div class="form-check mb-3">
+        @Html.CheckBoxFor(m => m.IsPublished, new { @class = "form-check-input" })
+        @Html.LabelFor(m => m.IsPublished, new { @class = "form-check-label" })
+    </div>
+
+    <div>
+        <button class="btn btn-success" type="submit">Save</button>
+        <a class="btn btn-link" href="@Url.Action("MyEvents", "Organizer")">Back</a>
+    </div>
+}
+
+<script>
+    (function () {
+        function reindexRows(tableSelector) {
+            var table = document.querySelector(tableSelector);
+            if (!table) return;
+            var rows = table.tBodies[0].rows;
+            for (var r = 0; r < rows.length; r++) {
+                var inputs = rows[r].querySelectorAll('input, select, textarea');
+                inputs.forEach(function (el) {
+                    var name = el.getAttribute('name');
+                    if (!name) return;
+                    var newName = name.replace(/\[\d+\]/, '[' + r + ']');
+                    el.setAttribute('name', newName);
+                });
+            }
+        }
+
+        function createTicketRow(index) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><input class="form-control" name="TicketTypes[' + index + '].TypeName" /></td>' +
+                '<td><input class="form-control" name="TicketTypes[' + index + '].Price" type="number" step="0.01" /></td>' +
+                '<td><input class="form-control" name="TicketTypes[' + index + '].AvailableQuantity" type="number" min="0" /></td>' +
+                '<td><input class="form-control" name="TicketTypes[' + index + '].Description" /></td>' +
+                '<td><button type="button" class="btn btn-sm btn-danger remove-ticket">Remove</button></td>';
+            return tr;
+        }
+
+        function createDiscountRow(index) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><input class="form-control" name="Discounts[' + index + '].DiscountCode" /></td>' +
+                '<td><input class="form-control" name="Discounts[' + index + '].DiscountPercentage" type="number" step="0.01" /></td>' +
+                '<td><input class="form-control" name="Discounts[' + index + '].MaxDiscountAmount" type="number" step="0.01" /></td>' +
+                '<td><input class="form-control" name="Discounts[' + index + '].ValidFrom" type="date" /></td>' +
+                '<td><input class="form-control" name="Discounts[' + index + '].ValidTo" type="date" /></td>' +
+                '<td><button type="button" class="btn btn-sm btn-danger remove-discount">Remove</button></td>';
+            return tr;
+        }
+
+        document.addEventListener('click', function (e) {
+            var target = e.target;
+            if (!target) return;
+
+            if (target.id === 'addTicketType') {
+                e.preventDefault();
+                var tbody = document.querySelector('#ticketTypesTable tbody');
+                var index = tbody.querySelectorAll('tr').length;
+                tbody.appendChild(createTicketRow(index));
+                reindexRows('#ticketTypesTable');
+                return;
+            }
+
+            if (target.id === 'addDiscount') {
+                e.preventDefault();
+                var tbody = document.querySelector('#discountsTable tbody');
+                var index = tbody.querySelectorAll('tr').length;
+                tbody.appendChild(createDiscountRow(index));
+                reindexRows('#discountsTable');
+                return;
+            }
+
+            if (target.classList && target.classList.contains('remove-ticket')) {
+                e.preventDefault();
+                var tr = target.closest('tr');
+                if (tr) tr.parentNode.removeChild(tr);
+                reindexRows('#ticketTypesTable');
+                return;
+            }
+
+            if (target.classList && target.classList.contains('remove-discount')) {
+                e.preventDefault();
+                var tr = target.closest('tr');
+                if (tr) tr.parentNode.removeChild(tr);
+                reindexRows('#discountsTable');
+                return;
+            }
+        }, false);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            reindexRows('#ticketTypesTable');
+            reindexRows('#discountsTable');
+
+            var input = document.getElementById('imageUrlInput');
+            var previewWrapper = document.getElementById('imagePreviewWrapper');
+            var preview = document.getElementById('imagePreview');
+            if (input) {
+                input.addEventListener('input', function () {
+                    var url = input.value && input.value.trim();
+                    if (url) {
+                        preview.src = url;
+                        previewWrapper.style.display = 'block';
+                    } else {
+                        previewWrapper.style.display = 'none';
+                    }
+                });
+            }
+        }, false);
+    })();
+</script>

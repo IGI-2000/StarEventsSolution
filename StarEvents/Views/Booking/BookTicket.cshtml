@@ -1,0 +1,180 @@
+﻿@model StarEvents.Models.ViewModels.BookingViewModel
+
+@{
+    ViewBag.Title = "Book Tickets";
+    var maxTickets = ViewBag.MaxTicketsPerBooking ?? 10;
+}
+
+<div class="container my-4">
+    <h2>Book Tickets - @Model.EventName</h2>
+    <p><strong>Date:</strong> @Model.EventDate.ToString("dd MMM yyyy")</p>
+    <p><strong>Venue:</strong> @Model.VenueName</p>
+
+    @using (Html.BeginForm("ConfirmBooking", "Booking", FormMethod.Post, new { @id = "bookingForm" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.EventId)
+
+        <div class="card mb-3 p-3">
+            <h5>Ticket Types</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Price</th>
+                            <th>Available</th>
+                            <th style="width:160px">Quantity</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.TicketSelections.Count; i++)
+                        {
+                            <tr class="ticket-selection" data-price="@Model.TicketSelections[i].Price" data-available="@Model.TicketSelections[i].AvailableQuantity">
+                                <td>
+                                    @Html.HiddenFor(m => m.TicketSelections[i].TicketTypeId)
+                                    <strong>@Model.TicketSelections[i].TypeName</strong>
+                                </td>
+                                <td>@Model.TicketSelections[i].Price.ToString("C")</td>
+                                <td>@Model.TicketSelections[i].AvailableQuantity</td>
+                                <td>
+                                    <div class="input-group">
+                                        <button type="button" class="btn btn-outline-secondary btn-decrement" data-index="@i">-</button>
+                                        @Html.TextBoxFor(m => m.TicketSelections[i].Quantity, new { @class = "form-control text-center ticket-quantity", type = "number", min = "0", max = Model.TicketSelections[i].AvailableQuantity, step = "1" })
+                                        <button type="button" class="btn btn-outline-secondary btn-increment" data-index="@i">+</button>
+                                    </div>
+                                </td>
+                                <td class="ticket-subtotal">LKR 0.00</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Discount + Loyalty Points Section -->
+            <div class="row mt-3 g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label">Discount Code</label>
+                    <div class="input-group">
+                        @Html.TextBoxFor(m => m.DiscountCode, new { @class = "form-control", id = "discount-code", placeholder = "Enter code" })
+                        <button type="button" id="apply-discount" class="btn btn-outline-primary">Apply</button>
+                    </div>
+                    <div id="discount-info" class="mt-2"></div>
+                    @Html.HiddenFor(m => m.DiscountAmount, new { id = "discount-amount" })
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Loyalty Points to Use</label>
+                    <input type="number" id="loyalty-points" class="form-control" min="0" value="0" />
+                    <small class="text-muted">You can apply available loyalty points at checkout.</small>
+                </div>
+
+                <div class="col-md-4 text-end">
+                    <p class="mb-1">Tickets selected: <span id="selected-count">0</span> / @maxTickets</p>
+                    <p class="mb-1">Total: <strong id="total-amount">LKR 0.00</strong></p>
+                    <p class="mb-0">Final: <strong id="final-amount">LKR 0.00</strong></p>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between">
+                <small class="text-muted">Note: maximum @maxTickets tickets per booking.</small>
+                <div>
+                    <button type="submit" class="btn btn-success" id="confirm-booking">Confirm Booking</button>
+                    @Html.ActionLink("Cancel", "Index", "Event", null, new { @class = "btn btn-secondary ms-2" })
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var maxTickets = @maxTickets;
+
+            function recalc() {
+                var total = 0, selected = 0;
+                $('.ticket-selection').each(function () {
+                    var $row = $(this);
+                    var price = parseFloat($row.data('price')) || 0;
+                    var qty = parseInt($row.find('.ticket-quantity').val()) || 0;
+                    var avail = parseInt($row.data('available')) || 0;
+                    if (qty > avail) qty = avail;
+                    var subtotal = price * qty;
+                    $row.find('.ticket-subtotal').text('LKR ' + subtotal.toFixed(2));
+                    total += subtotal; selected += qty;
+                });
+
+                $('#selected-count').text(selected);
+                if (selected > maxTickets) {
+                    $('#discount-info').html('<div class="alert alert-warning p-2">You have selected more than ' + maxTickets + ' tickets.</div>');
+                    $('#confirm-booking').prop('disabled', true);
+                } else {
+                    $('#discount-info .alert-warning').remove();
+                    $('#confirm-booking').prop('disabled', false);
+                }
+
+                $('#total-amount').text('LKR ' + total.toFixed(2));
+                var discount = parseFloat($('#discount-amount').val() || 0);
+                var loyalty = parseFloat($('#loyalty-points').val() || 0);
+                var final = total - discount - loyalty;
+                if (final < 0) final = 0;
+                $('#final-amount').text('LKR ' + final.toFixed(2));
+            }
+
+            // increment/decrement buttons
+            $(document).on('click', '.btn-increment', function () {
+                var $input = $('.ticket-quantity').eq($(this).data('index'));
+                var val = parseInt($input.val() || 0) + 1;
+                var max = parseInt($input.attr('max') || 0);
+                if (val > max) val = max;
+                $input.val(val).trigger('change');
+            });
+
+            $(document).on('click', '.btn-decrement', function () {
+                var $input = $('.ticket-quantity').eq($(this).data('index'));
+                var val = parseInt($input.val() || 0) - 1;
+                if (val < 0) val = 0;
+                $input.val(val).trigger('change');
+            });
+
+            $(document).on('input change', '.ticket-quantity, #loyalty-points', recalc);
+
+            // Apply discount AJAX
+            $('#apply-discount').on('click', function () {
+                var code = $('#discount-code').val();
+                var total = parseFloat($('#total-amount').text().replace('LKR', '').replace(/,/g, '').trim()) || 0;
+                if (!code) {
+                    $('#discount-info').html('<div class="alert alert-danger p-2">Enter a discount code.</div>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("ValidateDiscountCode", "Booking")',
+                    type: 'POST',
+                    data: {
+                        code: code,
+                        bookingTotal: total,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $('#discount-amount').val(res.discountAmount);
+                            $('#discount-info').html('<div class="alert alert-success p-2">Discount applied: LKR ' + res.discountAmount.toFixed(2) + '</div>');
+                        } else {
+                            $('#discount-amount').val(0);
+                            $('#discount-info').html('<div class="alert alert-danger p-2">' + res.message + '</div>');
+                        }
+                        recalc();
+                    },
+                    error: function () {
+                        $('#discount-info').html('<div class="alert alert-danger p-2">Error validating discount code.</div>');
+                    }
+                });
+            });
+
+            $(recalc);
+        })();
+    </script>
+}

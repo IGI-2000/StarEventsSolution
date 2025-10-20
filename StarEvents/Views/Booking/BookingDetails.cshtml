@@ -1,0 +1,89 @@
+﻿@model StarEvents.Models.ViewModels.BookingDetailsViewModel
+
+@{
+    ViewBag.Title = "Booking Details";
+}
+
+<div class="container my-4">
+    <h2>Booking Details</h2>
+
+    <div class="card p-4 shadow-sm mb-4">
+        <p><strong>Reference:</strong> @Model.BookingReference</p>
+        <p><strong>Event:</strong> @Model.EventName</p>
+        <p><strong>Date:</strong> @(Model.EventDate?.ToString("dd MMM yyyy") ?? "TBA")</p>
+        <p><strong>Status:</strong> @Model.Status.ToString()</p>
+    </div>
+
+    <h5 class="mt-4">Booked Tickets</h5>
+    @if (Model.Items != null && Model.Items.Any())
+    {
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Ticket Type</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.TicketTypeName</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.UnitPrice.ToString("C")</td>
+                        <td>@item.Subtotal.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-muted">No ticket items found for this booking.</p>
+    }
+
+    <div class="mt-4">
+        <p><strong>Total:</strong> @Model.TotalAmount.ToString("C")</p>
+        <p><strong>Discount:</strong> @Model.DiscountAmount.ToString("C")</p>
+        <p><strong>Final Amount:</strong> @Model.FinalAmount.ToString("C")</p>
+    </div>
+
+    <div class="mt-4 d-flex align-items-center flex-wrap">
+        @if (Model.Status == StarEvents.Models.Domain.BookingStatus.Pending)
+        {
+            <a class="btn btn-primary me-2"
+               href='@Url.Action("RetryPayment", "Booking", new { bookingId = Model.BookingId })'>
+                Pay Now
+            </a>
+
+            @* Correct: use C# using statement (no leading @) inside Razor code block *@
+            using (Html.BeginForm("CancelPayment", "Booking", FormMethod.Post, new { @class = "d-inline" }))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookingId" value="@Model.BookingId" />
+                <button type="submit" class="btn btn-outline-danger me-2"
+                        onclick="return confirm('Are you sure you want to cancel this payment?');">
+                    Cancel Payment
+                </button>
+            }
+        }
+        else if (Model.Status == StarEvents.Models.Domain.BookingStatus.Confirmed)
+        {
+            <span class="text-success ms-2">
+                ✅ Tickets available for download in <a href='@Url.Action("MyBookings", "Booking")'>My Bookings</a>.
+            </span>
+        }
+        else if (Model.Status == StarEvents.Models.Domain.BookingStatus.Cancelled)
+        {
+            <span class="text-danger ms-2">
+                ❌ This booking has been cancelled.
+            </span>
+        }
+
+        <a class="btn btn-link ms-auto" href='@Url.Action("MyBookings", "Booking")'>
+            Back to My Bookings
+        </a>
+    </div>
+</div>

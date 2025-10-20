@@ -1,0 +1,38 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.EventAdminViewModel>
+
+@{
+    ViewBag.Title = "Manage Events";
+}
+
+<div class="container my-4">
+    <h2>Manage Events</h2>
+
+    <p>
+        <a class="btn btn-primary" href="@Url.Action("ExportSalesReport","Admin")">Export Sales (CSV)</a>
+        <a class="btn btn-secondary" href="@Url.Action("Dashboard","Admin")">Back to Dashboard</a>
+    </p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Event</th><th>Date</th><th>Venue</th><th>Ticket Types</th><th>Bookings</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model)
+            {
+                <tr>
+                    <td>@e.EventName</td>
+                    <td>@(e.EventDate?.ToString("dd MMM yyyy") ?? "TBA")</td>
+                    <td>@e.VenueName</td>
+                    <td>@e.TotalTicketTypes</td>
+                    <td>@e.TotalBookings</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@{
+    ViewBag.Title = "ManageEvent";
+}
+
+<h2>ManageEvent</h2>
+

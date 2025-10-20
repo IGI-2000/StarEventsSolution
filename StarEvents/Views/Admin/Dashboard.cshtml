@@ -1,0 +1,84 @@
+﻿@model StarEvents.Models.ViewModels.AdminDashboardViewModel
+
+@{
+    ViewBag.Title = "Admin Dashboard";
+}
+
+<div class="container my-4">
+    <h2>Admin Dashboard</h2>
+
+    <div class="row g-3 mt-3">
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <h6>Total Events</h6>
+                <h3>@Model.TotalEvents</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <h6>Active Events</h6>
+                <h3>@Model.ActiveEvents</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <h6>Total Venues</h6>
+                <h3>@Model.TotalVenues</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 shadow-sm">
+                <h6>Total Customers</h6>
+                <h3>@Model.TotalCustomers</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <a href="@Url.Action("SalesReport", "Admin")" class="btn btn-primary w-100 py-3">Sales Reports</a>
+        </div>
+        <div class="col-md-4">
+            <a href="@Url.Action("Users", "Admin")" class="btn btn-secondary w-100 py-3">Manage Users</a>
+        </div>
+        <div class="col-md-4">
+            <a href="@Url.Action("Discounts", "Admin")" class="btn btn-success w-100 py-3">Promotions</a>
+        </div>
+    </div>
+
+    <h4 class="mt-5">Recent Bookings</h4>
+    @if (Model.RecentBookings == null || !Model.RecentBookings.Any())
+    {
+        <div class="alert alert-info">No recent bookings.</div>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Ref</th>
+                    <th>Event</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.RecentBookings)
+                {
+                    <tr>
+                        <td>@b.BookingReference</td>
+                        <td>@b.EventName</td>
+                        <td>@b.FinalAmount.ToString("C")</td>
+                        <td>@b.BookingDate.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary" href="@Url.Action("BookingConfirmation", "Booking", new { id = b.BookingId })">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

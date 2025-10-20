@@ -1,0 +1,25 @@
+﻿razor Views/Organizer/RevenueReport.cshtml
+@model IEnumerable<dynamic>
+
+@{
+    ViewBag.Title = "Revenue Report";
+}
+
+<div class="container my-4">
+    <h2>Revenue Report</h2>
+    <p>From: @ViewBag.From.ToString("yyyy-MM-dd") To: @ViewBag.To.ToString("yyyy-MM-dd")</p>
+
+    <table class="table">
+        <thead><tr><th>Event</th><th>Tickets Sold</th><th>Revenue</th></tr></thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.EventName</td>
+                    <td>@r.TicketsSold</td>
+                    <td>@((decimal)r.Revenue).ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

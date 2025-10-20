@@ -1,0 +1,24 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.UserViewModel>
+
+@{
+    ViewBag.Title = "Users";
+}
+
+<div class="container my-4">
+    <h2>Users</h2>
+
+    <table class="table table-bordered">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th></tr></thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>@u.Name</td>
+                    <td>@u.Email</td>
+                    <td>@u.Role</td>
+                    <td>@(u.IsActive ? "Yes" : "No")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

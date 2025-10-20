@@ -1,0 +1,50 @@
+﻿@model IEnumerable<StarEvents.Models.ViewModels.EventViewModel>
+
+@{
+    ViewBag.Title = "My Events";
+}
+
+<div class="container my-4">
+    <h2>Organizer Dashboard</h2>
+
+    <p>
+        <a class="btn btn-primary" href="@Url.Action("CreateEvent","Organizer")">Create Event</a>
+    </p>
+
+    <div class="row">
+        @foreach (var e in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card h-100">
+                    @if (!string.IsNullOrWhiteSpace(e.ImageUrl))
+                    {
+                        <img src="@e.ImageUrl" class="card-img-top" alt="@e.EventName" style="height:180px;object-fit:cover;" />
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@e.EventName</h5>
+                        <p class="card-text">@e.VenueName &nbsp;•&nbsp; @(e.EventDate?.ToString("dd MMM yyyy HH:mm") ?? "TBA")</p>
+                        <p class="card-text"><strong>Tickets:</strong> @e.TotalSeats</p>
+                        <p class="card-text"><strong>Published:</strong> @(e.IsPublished ? "Yes" : "No")</p>
+                    </div>
+                    <div class="card-footer">
+                        <a class="btn btn-sm btn-outline-primary" href="@Url.Action("EditEvent","Organizer", new { id = e.EventId })">Edit</a>
+                        @using (Html.BeginForm("DeleteEvent","Organizer", FormMethod.Post, new { @class="d-inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("id", e.EventId)
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this event?');">Delete</button>
+                        }
+                        @using (Html.BeginForm("TogglePublish","Organizer", FormMethod.Post, new { @class = "d-inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("id", e.EventId)
+                            <button type="submit" class="btn btn-sm btn-secondary">
+                                @(e.IsPublished ? "Unpublish" : "Publish")
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

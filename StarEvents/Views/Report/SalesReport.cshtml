@@ -1,0 +1,41 @@
+﻿@model StarEvents.Models.ViewModels.SalesReportViewModel
+
+@{
+    ViewBag.Title = "Sales Report";
+}
+
+<div class="container my-4">
+    <h2>Sales Report</h2>
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-auto">
+            <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary">Filter</button>
+        </div>
+    </form>
+
+    <div class="mb-3">
+        <strong>Total Revenue:</strong> @Model.TotalRevenue.ToString("C") &nbsp;
+        <strong>Total Tickets:</strong> @Model.TotalTicketsSold
+    </div>
+
+    <table class="table table-striped">
+        <thead><tr><th>Event</th><th>Date</th><th>Tickets Sold</th><th>Revenue</th></tr></thead>
+        <tbody>
+            @foreach (var it in Model.Items)
+            {
+                <tr>
+                    <td>@it.EventName</td>
+                    <td>@it.EventDate.ToString("dd MMM yyyy")</td>
+                    <td>@it.TicketsSold</td>
+                    <td>@it.Revenue.ToString("C")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
