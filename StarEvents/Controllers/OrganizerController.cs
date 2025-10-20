@@ -228,7 +228,30 @@ namespace StarEvents.Controllers
         {
             await PopulateVenueSelectList(model);
 
-            if (!ModelState.IsValid) return View(model);
+            // Sanitize incoming collections: remove empty/placeholder rows that cause ModelState to be invalid
+            model.TicketTypes = model.TicketTypes?.Where(tt => !string.IsNullOrWhiteSpace(tt?.TypeName)).ToList() ?? new List<TicketTypeCreateViewModel>();
+            model.Discounts = model.Discounts?.Where(d => !string.IsNullOrWhiteSpace(d?.DiscountCode)).ToList() ?? new List<DiscountCreateViewModel>();
+
+            // Normalize numeric values to safe defaults
+            foreach (var tt in model.TicketTypes)
+            {
+                if (tt.Price < 0) tt.Price = 0;
+                if (tt.AvailableQuantity < 0) tt.AvailableQuantity = 0;
+            }
+            foreach (var d in model.Discounts)
+            {
+                if (d.DiscountPercentage < 0) d.DiscountPercentage = 0;
+                if (d.MaxDiscountAmount.HasValue && d.MaxDiscountAmount < 0) d.MaxDiscountAmount = 0;
+            }
+
+            // Re-validate model after sanitization
+            ModelState.Clear();
+            TryValidateModel(model);
+            if (!ModelState.IsValid)
+            {
+                // Populate select list again (PopulateVenueSelectList already called above)
+                return View(model);
+            }
 
             var evt = await _context.Events
                 .Include(e => e.TicketTypes)
@@ -298,6 +321,7 @@ namespace StarEvents.Controllers
             {
                 try
                 {
+                    // Replace ticket types: remove existing, add sanitized incoming ones
                     _context.TicketTypes.RemoveRange(evt.TicketTypes);
                     await _context.SaveChangesAsync();
 
@@ -318,6 +342,7 @@ namespace StarEvents.Controllers
                         await _context.SaveChangesAsync();
                     }
 
+                    // Replace discounts
                     _context.Discounts.RemoveRange(evt.Discounts);
                     await _context.SaveChangesAsync();
 
@@ -352,6 +377,10 @@ namespace StarEvents.Controllers
                 {
                     tx.Rollback();
                     ModelState.AddModelError("", "Failed to update event: " + ex.Message);
+                    // repopulate lists for view
+                    if (model.TicketTypes == null || !model.TicketTypes.Any()) model.TicketTypes = new List<TicketTypeCreateViewModel> { new TicketTypeCreateViewModel() };
+                    if (model.Discounts == null || !model.Discounts.Any()) model.Discounts = new List<DiscountCreateViewModel> { new DiscountCreateViewModel { ValidFrom = DateTime.UtcNow.Date, ValidTo = DateTime.UtcNow.Date.AddDays(30) } };
+                    await PopulateVenueSelectList(model);
                     return View(model);
                 }
             }
